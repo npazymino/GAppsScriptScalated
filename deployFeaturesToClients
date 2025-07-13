@@ -1,0 +1,77 @@
+/**
+ * CONCEPTUAL: Bulk Deployment Script for Client Plans.
+ * This script demonstrates the *approach* to updating multiple client spreadsheets
+ * with new Apps Script functionality by linking to a shared library and injecting
+ * a minimal onOpen function.
+ *
+ * NOTE: Direct programmatic modification of other Apps Script projects
+ * (adding libraries, writing code) requires interaction with the
+ * Google Apps Script API (REST API), which involves OAuth 2.0 authentication
+ * and specific HTTP requests via UrlFetchApp. This script provides the
+ * conceptual framework, not the full API implementation.
+ */
+function deployFeaturesToClients() {
+  const ui = SpreadsheetApp.getUi();
+
+  // IMPORTANT: Replace with the actual Script ID of your deployed PROSPR_Core_Library
+  const PROSPR_LIBRARY_SCRIPT_ID = 'YOUR_PROSPR_CORE_LIBRARY_SCRIPT_ID_HERE'; // e.g., '1aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789'
+  const PROSPR_LIBRARY_IDENTIFIER = 'PROSPR_Lib'; // The identifier clients will use to reference the library
+
+  if (PROSPR_LIBRARY_SCRIPT_ID === 'YOUR_PROSPR_CORE_LIBRARY_SCRIPT_ID_HERE' || !PROSPR_LIBRARY_SCRIPT_ID) {
+      ui.alert('Configuration Error', 'Please update PROSPR_LIBRARY_SCRIPT_ID in the deployment script.', ui.ButtonSet.OK);
+      return;
+  }
+
+  // List of client Google Sheet URLs
+  const clientSheetUrls = [
+    'https://docs.google.com/spreadsheets/d/CLIENT_SHEET_ID_1/edit',
+    'https://docs.google.com/spreadsheets/d/CLIENT_SHEET_ID_2/edit',
+    // Add all your client spreadsheet URLs here
+  ];
+
+  const deploymentLog = [];
+
+  for (let i = 0; i < clientSheetUrls.length; i++) {
+    const url = clientSheetUrls[i];
+    let clientSheetId = '';
+    try {
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)\//);
+      if (match && match[1]) {
+        clientSheetId = match[1];
+      } else {
+        throw new Error('Invalid Google Sheet URL format: ' + url);
+      }
+
+      // --- CONCEPTUAL API INTERACTION ---
+      // This is where you would use the Google Apps Script API to modify the client's project.
+      // The actual implementation would involve:
+      // 1. Getting an OAuth2 token for the Apps Script API scope.
+      // 2. Making a GET request to `script.googleapis.com/v1/projects/{scriptId}` to get the client's script project ID.
+      //    (Note: A spreadsheet-bound script's project ID is different from its spreadsheet ID).
+      // 3. Making a PUT request to `script.googleapis.com/v1/projects/{scriptId}/content` to update its files.
+      //    This would involve sending a JSON payload with the new appsscript.json (including library)
+      //    and the new Code.gs content (the minimal onOpen).
+
+      // Mocking the success for demonstration purposes:
+      deploymentLog.push(`Attempting to deploy to client: ${url}`);
+      deploymentLog.push(`  - Conceptual: Fetching script project ID for sheet: ${clientSheetId}`);
+      deploymentLog.push(`  - Conceptual: Adding library '${PROSPR_LIBRARY_IDENTIFIER}' (ID: ${PROSPR_LIBRARY_SCRIPT_ID}) to client's appsscript.json`);
+      deploymentLog.push(`  - Conceptual: Injecting onOpen function to call ${PROSPR_LIBRARY_IDENTIFIER}.initClientMenu() into client's Code.gs`);
+      deploymentLog.push(`  - Successfully processed (conceptually): ${url}`);
+
+    } catch (e) {
+      deploymentLog.push(`Failed to process: ${url}. Error: ${e.message}`);
+    }
+  }
+
+  // Output the deployment log to a new sheet or log.
+  const logSheet = spreadsheet.getSheetByName('Deployment Log');
+  if (logSheet) {
+    logSheet.clearContents();
+  } else {
+    spreadsheet.insertSheet('Deployment Log');
+  }
+  spreadsheet.getSheetByName('Deployment Log').getRange(1, 1, deploymentLog.length, 1).setValues(deploymentLog.map(line => [line]));
+
+  ui.alert('Deployment Attempt Complete', 'Check "Deployment Log" sheet for details. Actual API integration required for full automation.', ui.ButtonSet.OK);
+}
